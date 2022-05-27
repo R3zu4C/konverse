@@ -1,0 +1,27 @@
+{
+  "name": "konverse",
+  "version": "1.0.0",
+  "description": "Real-time chatting web app",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/R3zu4C/konverse.git"
+  },
+  "author": "R3zu4C",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/R3zu4C/konverse/issues"
+  },
+  "homepage": "https://github.com/R3zu4C/konverse#readme",
+  "dependencies": {
+    "body-parser": "^1.20.0",
+    "express": "^4.18.1",
+    "node-pre-gyp": "^0.17.0",
+    "wrtc": "^0.4.7"
+  }
+}
