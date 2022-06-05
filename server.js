@@ -1,9 +1,7 @@
 import express from 'express';
 import webrtc from 'wrtc';
-import WebSocket from 'ws';
-import { uuidv4 } from 'uuid';
-
-const WebSocketServer = WebSocket.Server;
+import fs from 'fs';
+import WebSocket, { WebSocketServer } from 'ws';
 
 const app = express();
 
@@ -22,6 +20,17 @@ const iceConfig = {
     }
   ]
 }
+
+const uuidv4 = () => {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+      var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+  });
+}
+
+app.get('/', (req, res) => {
+  res.end(fs.readFileSync('./views/index.html'));
+})
 
 const webServer = app.listen(5000, () => console.log('Server running on port 5000...'));
 
@@ -52,7 +61,7 @@ webSocketServer.on("connection", async (socket) => {
     }))
   })
 
-  webSocketServer.send(JSON.stringify({
+  socket.send(JSON.stringify({
     type: 'welcome',
     id: socket.id,
   }))
@@ -67,7 +76,7 @@ webSocketServer.on("connection", async (socket) => {
       peers.get(socket.id).username = msg.username;
       peers.get(socket.id).peer = peer;
 
-      peer.ontrack((event) => {
+      peer.ontrack = (event) => {
         if(event.streams[0]) {
           peers.get(socket.id).stream = event.streams[0];
 
@@ -79,9 +88,9 @@ webSocketServer.on("connection", async (socket) => {
 
           webSocketServer.broadcast(JSON.stringify(payload));
         }
-      })
+      }
 
-      const desc = webrtc.RTCSessionDescription(msg.sdp);
+      const desc = new webrtc.RTCSessionDescription(msg.sdp);
       await peer.setRemoteDescription(desc);
       const answer = await peer.createAnswer();
       await peer.setLocalDescription(answer);
@@ -105,7 +114,7 @@ webSocketServer.on("connection", async (socket) => {
 
       const payload = {
         type: 'peers',
-        peers: list,
+        peers: peerList,
       }
 
       socket.send(JSON.stringify(payload));
@@ -117,9 +126,9 @@ webSocketServer.on("connection", async (socket) => {
       const peer = new webrtc.RTCPeerConnection(iceConfig);
       consumers.set(msg.consumerId, peer);
 
-      remoteUser.stream.getTracks().forEach((track) => peer.addTrack((track, remoteUser.stream)))
+      remoteUser.stream.getTracks().forEach((track) => peer.addTrack(track, remoteUser.stream))
 
-      const desc = webrtc.RTCSessionDescription(msg.sdp);
+      const desc = new webrtc.RTCSessionDescription(msg.sdp);
       await peer.setRemoteDescription(desc);
       const answer = await peer.createAnswer();
       await peer.setLocalDescription(answer);
@@ -144,10 +153,12 @@ webSocketServer.on("connection", async (socket) => {
       }
 
     } 
-    else if(msg.type === 'cosumer_ice') {
+    else if(msg.type === 'consumer_ice') {
+      // console.log(msg.id);
+      // console.log(consumers);
       const user = consumers.get(msg.id);
 
-      if(user.peer) {
+      if(user && user.peer) {
         const iceCandidate = new webrtc.RTCIceCandidate(msg.ice);
         await user.peer.addIceCandidate(iceCandidate);
       }
