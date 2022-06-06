@@ -19,7 +19,6 @@ const mediaConstraint = {
   audio: true,
   video: {
     width: { min: 320, max: 1280 },
-    height: { min: 180 },
     facingMode: 'user'
   }
 }
@@ -47,7 +46,7 @@ const uuidv4 = () => {
 
 const recalculateLayout = () => {
   const container = remoteContainer;
-  const videoContainer = document.querySelector('.videos_inner');
+  const videoContainer = document.querySelector('.videos-inner');
   const videoCount = document.querySelectorAll('.videoWrap').length;
 
   if(videoCount >= 3) {
@@ -71,7 +70,7 @@ const handleRemoteTrack = (stream, username) => {
     video.muted = (username == username);
 
     const div = document.createElement('div');
-    div.id = `user_${username.value}`;
+    div.id = `user_${username}`;
     div.classList.add('videoWrap');
 
     const nameContainer = document.createElement('div');
@@ -87,7 +86,7 @@ const handleRemoteTrack = (stream, username) => {
     document.querySelector('.videos-inner').appendChild(div);
   }
 
-  // recalculateLayout();
+  recalculateLayout();
 }
 
 const createConsumeTransport = async (peer) => {
@@ -113,7 +112,7 @@ const createConsumeTransport = async (peer) => {
         ice: candidate,
         id: peer.id
       }
-      await connection.send(JSON.stringify(payload));
+      connection.send(JSON.stringify(payload));
     }
   }
 
@@ -147,7 +146,7 @@ const handlePeers = async (msg) => {
   if(peers.length > 0) {
     for(const peer in peers) {
       clients.set(peers[peer].id, peers[peer]);
-      await consume(peers[peer]);
+      consume(peers[peer]);
     }
   }
 }
@@ -162,19 +161,21 @@ const handleNewProducer = async (msg) => {
   const _peer = { id: msg.id, username: msg.username };
   clients.set(msg.id, _peer);
   
-  await consume(_peer);
+  consume(_peer);
 }
 
 const removeUser = (msg) => {
   const { username, consumerId } = clients.get(msg.id);
   
   consumers.delete(consumerId);
-  clients.delete(id);
-  const videoObj = document.querySelector(`#remote_${username.value}`);
+  clients.delete(msg.id);
+  const videoObj = document.querySelector(`#remote_${username}`);
   videoObj.srcObject.getTracks().forEach(track => track.stop());
+  const div = document.querySelector(`#user_${username}`);
   videoObj.remove();
+  div.remove();
 
-  // recalculateLayout();
+  recalculateLayout();
 }
 
 const init = () => {
@@ -234,7 +235,7 @@ connectBtn.addEventListener('click', async () => {
         ice: candidate,
         id: localUUID
       }
-      await connection.send(JSON.stringify(payload));
+      connection.send(JSON.stringify(payload));
     }
   }
 
@@ -249,7 +250,7 @@ connectBtn.addEventListener('click', async () => {
       username: username.value
     }
 
-    await connection.send(JSON.stringify(payload));
+    connection.send(JSON.stringify(payload));
   }
 
   localStream.getTracks().forEach(track => peer.addTrack(track, localStream));
@@ -259,6 +260,6 @@ connectBtn.addEventListener('click', async () => {
     id: localUUID
   }
 
-  await connection.send(JSON.stringify(payload));
+  connection.send(JSON.stringify(payload));
 
 })
