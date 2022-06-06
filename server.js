@@ -28,10 +28,6 @@ const uuidv4 = () => {
   });
 }
 
-app.get('/', (req, res) => {
-  res.end(fs.readFileSync('./views/index.html'));
-})
-
 const webServer = app.listen(5000, () => console.log('Server running on port 5000...'));
 
 const peers = new Map();
